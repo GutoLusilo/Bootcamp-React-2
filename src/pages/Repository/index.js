@@ -4,7 +4,7 @@ import PropTypes from 'prop-types';
 import api from '../../services/api';
 
 import Container from '../../components/Container';
-import { Loading, Owner, IssueList } from './styles';
+import { Loading, Owner, IssueList, IssueTypeButton } from './styles';
 
 export default class Repository extends Component {
   // eslint-disable-next-line react/static-property-placement
@@ -20,10 +20,12 @@ export default class Repository extends Component {
     repository: {},
     issues: [],
     loading: true,
+    state: 'open',
   };
 
   async componentDidMount() {
     const { match } = this.props;
+    const { state } = this.state;
 
     const repoName = decodeURIComponent(match.params.repository);
 
@@ -31,8 +33,8 @@ export default class Repository extends Component {
       api.get(`/repos/${repoName}`),
       api.get(`/repos/${repoName}/issues`, {
         params: {
-          state: 'open',
-          per_page: 5,
+          state,
+          per_page: 10,
         },
       }),
     ]);
@@ -44,8 +46,26 @@ export default class Repository extends Component {
     });
   }
 
+  async handleIssueStateButton(state) {
+    const { match } = this.props;
+
+    const repoName = decodeURIComponent(match.params.repository);
+
+    const issues = await api.get(`/repos/${repoName}/issues`, {
+      params: {
+        state,
+        per_page: 10,
+      },
+    });
+
+    this.setState({
+      state,
+      issues: issues.data,
+    });
+  }
+
   render() {
-    const { repository, issues, loading } = this.state;
+    const { repository, issues, loading, state } = this.state;
 
     if (loading) {
       return <Loading>Carregando</Loading>;
@@ -61,6 +81,30 @@ export default class Repository extends Component {
         </Owner>
 
         <IssueList>
+          <div className="btn-state">
+            <IssueTypeButton
+              selected={state === 'open'}
+              type="button"
+              onClick={() => this.handleIssueStateButton('open')}
+            >
+              Open
+            </IssueTypeButton>
+            <IssueTypeButton
+              selected={state === 'closed'}
+              type="button"
+              onClick={() => this.handleIssueStateButton('closed')}
+            >
+              Closed
+            </IssueTypeButton>
+            <IssueTypeButton
+              selected={state === 'all'}
+              type="button"
+              onClick={() => this.handleIssueStateButton('all')}
+            >
+              All
+            </IssueTypeButton>
+          </div>
+
           {issues.map(issue => (
             <li key={String(issue.id)}>
               <img src={issue.user.avatar_url} alt={issue.user.login} />

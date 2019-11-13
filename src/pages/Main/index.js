@@ -60,7 +60,6 @@ export default class Main extends Component {
         wrongInput: false,
       });
     } catch (err) {
-      console.log(err);
       this.setState({ wrongInput: true });
     }
 
