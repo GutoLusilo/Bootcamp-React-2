@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
 import PropTypes from 'prop-types';
+import { FaArrowRight, FaArrowLeft } from 'react-icons/fa';
 import api from '../../services/api';
 
 import Container from '../../components/Container';
@@ -21,6 +22,7 @@ export default class Repository extends Component {
     issues: [],
     loading: true,
     state: 'open',
+    issuePage: 1,
   };
 
   async componentDidMount() {
@@ -34,7 +36,7 @@ export default class Repository extends Component {
       api.get(`/repos/${repoName}/issues`, {
         params: {
           state,
-          per_page: 10,
+          per_page: 5,
         },
       }),
     ]);
@@ -54,18 +56,45 @@ export default class Repository extends Component {
     const issues = await api.get(`/repos/${repoName}/issues`, {
       params: {
         state,
-        per_page: 10,
+        per_page: 5,
       },
     });
 
     this.setState({
       state,
       issues: issues.data,
+      issuePage: 1,
+    });
+  }
+
+  async handlePaginationButton(plus) {
+    const { match } = this.props;
+    const { state, issuePage } = this.state;
+
+    const repoName = decodeURIComponent(match.params.repository);
+
+    const page = plus ? issuePage + 1 : issuePage - 1;
+
+    const issues = await api.get(`/repos/${repoName}/issues`, {
+      params: {
+        state,
+        per_page: 5,
+        page,
+      },
+    });
+
+    if (page < 1 || issues.data.length < 1) {
+      return;
+    }
+
+    this.setState({
+      issues: issues.data,
+      issuePage: page,
     });
   }
 
   render() {
-    const { repository, issues, loading, state } = this.state;
+    const { repository, issues, loading, state, issuePage } = this.state;
 
     if (loading) {
       return <Loading>Carregando</Loading>;
@@ -81,28 +110,40 @@ export default class Repository extends Component {
         </Owner>
 
         <IssueList>
-          <div className="btn-state">
-            <IssueTypeButton
-              selected={state === 'open'}
-              type="button"
-              onClick={() => this.handleIssueStateButton('open')}
-            >
-              Open
-            </IssueTypeButton>
-            <IssueTypeButton
-              selected={state === 'closed'}
-              type="button"
-              onClick={() => this.handleIssueStateButton('closed')}
-            >
-              Closed
-            </IssueTypeButton>
-            <IssueTypeButton
-              selected={state === 'all'}
-              type="button"
-              onClick={() => this.handleIssueStateButton('all')}
-            >
-              All
-            </IssueTypeButton>
+          <div className="top-issuelist">
+            <div className="btn-state">
+              <IssueTypeButton
+                selected={state === 'open'}
+                onClick={() => this.handleIssueStateButton('open')}
+              >
+                Open
+              </IssueTypeButton>
+              <IssueTypeButton
+                selected={state === 'closed'}
+                onClick={() => this.handleIssueStateButton('closed')}
+              >
+                Closed
+              </IssueTypeButton>
+              <IssueTypeButton
+                selected={state === 'all'}
+                onClick={() => this.handleIssueStateButton('all')}
+              >
+                All
+              </IssueTypeButton>
+            </div>
+            <div className="pagination">
+              <IssueTypeButton
+                disabled={issuePage <= 1}
+                onClick={() => this.handlePaginationButton(false)}
+              >
+                <FaArrowLeft />
+              </IssueTypeButton>
+              <IssueTypeButton
+                onClick={() => this.handlePaginationButton(true)}
+              >
+                <FaArrowRight />
+              </IssueTypeButton>
+            </div>
           </div>
 
           {issues.map(issue => (

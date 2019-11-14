@@ -98,14 +98,27 @@ export const IssueList = styled.ul`
     }
   }
 
-  div.btn-state {
+  div.top-issuelist {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    justify-content: space-between;
+
+    div.btn-state {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+    }
+
+    div.pagination {
+      display: flex;
+    }
   }
 `;
 
-export const IssueTypeButton = styled.button`
+export const IssueTypeButton = styled.button.attrs(props => ({
+  type: 'button',
+  disabled: props.disabled,
+}))`
   color: #494949 !important;
   text-decoration: none;
   background: #eee;
@@ -126,6 +139,12 @@ export const IssueTypeButton = styled.button`
     background: #7159c1;
     border-color: #7159c1 !important;
     transition: all 0.4s ease 0s;
+  }
+
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.6;
+    pointer-events: none;
   }
 
   ${props =>
